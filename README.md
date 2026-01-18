@@ -10,6 +10,11 @@ An elegant, lightweight, and browser-based tool designed to transform a single *
 
 When developing Flutter apps, generating launcher icons manually can be tedious. This tool automates the resizing process, ensuring your icons meet the specific pixel requirements for different screen densities without leaving your browser.
 
+## 🧪 Demo
+
+
+[![Live Demo](https://img.shields.io/badge/Live-Demo-blue)](https://isaac-maker.github.io/Icon-Resizer-Flutter/)
+
 ## ✨ Features
 
 * **Strict PNG Validation:** Only accepts `.png` files to ensure transparency and quality.
@@ -51,4 +56,5 @@ When developing Flutter apps, generating launcher icons manually can be tedious.
 This project is licensed under the MIT License - feel free to use it for your personal or commercial Flutter projects!
 
 ---
+
 *Created with ❤️ for the Flutter Community.*
