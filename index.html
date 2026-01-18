@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PNG Icon Resizer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-6">
+
+    <div class="max-w-md w-full bg-gray-800 rounded-2xl shadow-2xl p-8 border border-gray-700">
+        <h1 class="text-2xl font-bold text-center mb-2">Icon Resizer Flutter</h1>
+        <p class="text-gray-400 text-sm text-center mb-8">Generate multiple sizes for your Flutter-Project.</p>
+
+        <div id="drop-zone" class="border-2 border-dashed border-blue-500 rounded-xl p-10 text-center hover:bg-blue-500/10 transition-colors cursor-pointer mb-6">
+            <input type="file" id="file-input" accept="image/png" class="hidden">
+            <div class="text-4xl mb-4">🖼️</div>
+            <p class="text-sm font-medium">Click or Drag & Drop</p>
+            <p class="text-xs text-gray-500 mt-2">Only PNG files are allowed</p>
+        </div>
+
+        <div id="file-info" class="hidden mb-6 p-4 bg-gray-700 rounded-lg">
+            <p class="text-xs text-blue-400 uppercase font-bold mb-1">Selected File:</p>
+            <p id="file-name" class="text-sm truncate font-mono"></p>
+        </div>
+
+        <button id="generate-btn" disabled class="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-3 rounded-lg transition-all transform active:scale-95">
+            Generate Icons (.zip)
+        </button>
+
+        <p id="status-msg" class="text-center text-sm mt-4 font-medium"></p>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const generateBtn = document.getElementById('generate-btn');
+        const statusMsg = document.getElementById('status-msg');
+        const fileNameDisp = document.getElementById('file-name');
+        const fileInfo = document.getElementById('file-info');
+
+        let selectedFile = null;
+        const targetSizes = [72, 48, 96, 144, 192];
+
+        // Trigger file input
+        dropZone.onclick = () => fileInput.click();
+
+        // Handle File Selection
+        fileInput.onchange = (e) => handleFile(e.target.files[0]);
+
+        // Drag & Drop Listeners
+        dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('bg-blue-500/10'); };
+        dropZone.ondragleave = () => dropZone.classList.remove('bg-blue-500/10');
+        dropZone.ondrop = (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('bg-blue-500/10');
+            handleFile(e.dataTransfer.files[0]);
+        };
+
+        function handleFile(file) {
+            if (!file) return;
+
+            // Strict PNG Validation
+            if (file.type !== "image/png") {
+                showStatus("Error: Only PNG images are accepted!", "text-red-400");
+                resetSelection();
+                return;
+            }
+
+            selectedFile = file;
+            fileNameDisp.textContent = file.name;
+            fileInfo.classList.remove('hidden');
+            generateBtn.disabled = false;
+            showStatus("File ready to process", "text-green-400");
+        }
+
+        function resetSelection() {
+            selectedFile = null;
+            fileInput.value = "";
+            fileInfo.classList.add('hidden');
+            generateBtn.disabled = true;
+        }
+
+        function showStatus(text, colorClass) {
+            statusMsg.textContent = text;
+            statusMsg.className = `text-center text-sm mt-4 font-medium ${colorClass}`;
+        }
+
+        // Logic to Resize and Zip
+        generateBtn.onclick = async () => {
+            if (!selectedFile) return;
+            
+            showStatus("Processing...", "text-blue-400");
+            const zip = new JSZip();
+            const imgName = selectedFile.name.split('.')[0];
+            
+            try {
+                const bitmap = await createImageBitmap(selectedFile);
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+
+                for (let size of targetSizes) {
+                    canvas.width = size;
+                    canvas.height = size;
+                    
+                    // High quality scaling
+                    ctx.clearRect(0, 0, size, size);
+                    ctx.drawImage(bitmap, 0, 0, size, size);
+                    
+                    // Convert canvas to Blob
+                    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                    zip.file(`${imgName}_${size}x${size}.png`, blob);
+                }
+
+                const content = await zip.generateAsync({type: "blob"});
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(content);
+                link.download = `${imgName}_icons.zip`;
+                link.click();
+
+                showStatus("Success! Check your downloads.", "text-green-400");
+            } catch (err) {
+                showStatus("Error processing image.", "text-red-400");
+                console.error(err);
+            }
+        };
+    </script>
+</body>
+</html>
